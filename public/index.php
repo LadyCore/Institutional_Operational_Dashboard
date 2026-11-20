@@ -24,12 +24,12 @@ $ctx = $servicio->contexto($usuario);
 $ctx['flash'] = $servicio->tomarFlash();
 $ctx['ruta'] = $_GET['r'] ?? 'panel';
 $rutas = [
-    'panel' => 'Panel',
+    'panel' => 'Tablero Operativo',
     'actividades' => 'Actividades',
     'actividad' => 'Actividad',
     'requerimientos' => 'Requerimientos',
-    'auditoria' => 'Auditoría',
-    'institutos' => 'Institutos',
+    'institutos' => 'Dependencias',
+    'historial' => 'Historial',
 ];
 if (!isset($rutas[$ctx['ruta']])) {
     $ctx['ruta'] = 'panel';
@@ -47,16 +47,30 @@ $ctx['filtro_actividades'] = [
     'instituto' => en_lista((string) ($_GET['instituto'] ?? ''), $institutoIds),
     'plazo' => en_lista((string) ($_GET['plazo'] ?? ''), ['vencida', 'proxima', 'en_plazo', 'finalizada']),
     'req' => (($_GET['req'] ?? '') === 'pendientes') ? 'pendientes' : '',
+    'situacion' => $ctx['ruta'] === 'actividades'
+        ? en_lista((string) ($_GET['situacion'] ?? ''), ['rojo', 'amarillo', 'verde', 'finalizada'])
+        : '',
 ];
 $ctx['filtro_requerimientos'] = [
     'q' => $ctx['ruta'] === 'requerimientos' ? $q : '',
     'tipo' => en_lista((string) ($_GET['tipo'] ?? ''), tipos_requerimiento()),
-    'estado' => en_lista((string) ($_GET['estado'] ?? ''), estados_requerimiento()),
+    'estado' => en_lista((string) ($_GET['estado'] ?? ''), array_merge(estados_requerimiento(), ['sin_resolver'])),
     'instituto' => en_lista((string) ($_GET['instituto'] ?? ''), $institutoIds),
 ];
+$fechaFiltro = static function (string $valor): string {
+    return fecha_valida($valor) ? $valor : '';
+};
 $ctx['filtro_auditoria'] = [
-    'q' => $ctx['ruta'] === 'auditoria' ? $q : '',
-    'instituto' => en_lista((string) ($_GET['instituto'] ?? ''), $institutoIds),
+    'q' => $ctx['ruta'] === 'historial' ? $q : '',
+    'instituto' => '',
+    'tipo_registro' => $ctx['ruta'] === 'historial'
+        ? en_lista((string) ($_GET['tipo_registro'] ?? ''), ['organismo', 'actividad', 'tarea', 'requerimiento'])
+        : '',
+    'operacion' => $ctx['ruta'] === 'historial'
+        ? en_lista((string) ($_GET['operacion'] ?? ''), ['alta', 'modificacion', 'baja', 'activacion', 'desactivacion', 'reasignacion', 'prorroga'])
+        : '',
+    'desde' => $ctx['ruta'] === 'historial' ? $fechaFiltro((string) ($_GET['desde'] ?? '')) : '',
+    'hasta' => $ctx['ruta'] === 'historial' ? $fechaFiltro((string) ($_GET['hasta'] ?? '')) : '',
 ];
 
 $ctx['titulo'] = $rutas[$ctx['ruta']];
@@ -64,13 +78,25 @@ $ctx['actividad'] = null;
 $ctx['aviso'] = null;
 $vista = $ctx['ruta'] === 'panel' ? 'panel' : $ctx['ruta'];
 
+if ($ctx['ruta'] === 'historial' && !Politica::veHistorial($usuario)) {
+    http_response_code(403);
+    $ctx['aviso'] = 'El historial está disponible solo para el administrador principal.';
+    $ctx['titulo'] = 'Historial no disponible';
+    $vista = 'aviso';
+}
+
 if ($ctx['ruta'] === 'actividad') {
     $id = (string) ($_GET['id'] ?? '');
     if (!isset($ctx['actividades_por_id'][$id])) {
-        http_response_code($servicio->existeActividad($id) ? 403 : 404);
-        $ctx['aviso'] = $servicio->existeActividad($id)
-            ? 'Esta actividad no pertenece al ámbito de su perfil.'
-            : 'No hay una actividad con ese identificador.';
+        if ($servicio->sinDependenciasVigentes($id)) {
+            http_response_code(404);
+            $ctx['aviso'] = 'Esta actividad quedó fuera del tablero porque no tiene dependencias vigentes.';
+        } else {
+            http_response_code($servicio->existeActividad($id) ? 403 : 404);
+            $ctx['aviso'] = $servicio->existeActividad($id)
+                ? 'Esta actividad no pertenece al ámbito de su perfil.'
+                : 'No hay una actividad con ese identificador.';
+        }
         $ctx['titulo'] = 'Actividad no disponible';
         $vista = 'aviso';
     } else {
@@ -80,7 +106,7 @@ if ($ctx['ruta'] === 'actividad') {
     }
 }
 
-$ctx['titulo_pagina'] = $ctx['titulo'] . ' · DIGEDUC';
+$ctx['titulo_pagina'] = $ctx['titulo'] . ' · CENTRAL';
 render($vista, $ctx);
 
 function render(string $vista, array $ctx): void
@@ -90,7 +116,7 @@ function render(string $vista, array $ctx): void
         http_response_code(404);
         $ctx['aviso'] = 'La sección no existe.';
         $ctx['titulo'] = 'Sección no disponible';
-        $ctx['titulo_pagina'] = 'Sección no disponible · DIGEDUC';
+        $ctx['titulo_pagina'] = 'Sección no disponible · CENTRAL';
         $vistaArchivo = ROOT . '/views/aviso.php';
     }
     extract($ctx, EXTR_SKIP);

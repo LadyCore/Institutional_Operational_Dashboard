@@ -3,9 +3,11 @@
 declare(strict_types=1);
 ?>
 <ul class="leyenda">
-    <li><span class="sem sem-verde">En plazo</span> Faltan más de 7 días calendario.</li>
-    <li><span class="sem sem-amarillo">Por vencer</span> Faltan entre 0 y 7 días, incluido el día de hoy.</li>
-    <li><span class="sem sem-rojo">Vencida</span> La fecha ya pasó y la actividad o la tarea no está finalizada.</li>
-    <li><span class="sem sem-cumplida">Cumplida</span> Finalizada. No se muestra como vencida pendiente.</li>
+    <li><span class="sem sem-verde">En plazo</span> Primer vencimiento: transcurrió menos del 50 % y faltan más de cinco días.</li>
+    <li><span class="sem sem-amarillo">Avance del plazo</span> Primer vencimiento: transcurrió el 50 % o más y faltan más de cinco días.</li>
+    <li><span class="sem sem-amarillo sem-prorroga">Prórroga vigente</span> Hay un vencimiento adicional y todavía no se incumplió.</li>
+    <li><span class="sem sem-rojo">Próxima a vencer</span> Primer vencimiento: faltan cinco días o menos.</li>
+    <li><span class="sem sem-rojo sem-incumplido">Vencimiento incumplido</span> La fecha exigible ya pasó.</li>
+    <li><span class="sem sem-cumplida">Cumplimentada</span> Deja de generar alertas.</li>
 </ul>
-<p class="nota-semaforo">El estado de ejecución queda aparte del semáforo. Una tarea puede estar bloqueada y, al mismo tiempo, en rojo.</p>
+<p class="nota-semaforo">La finalización prevista de la actividad es independiente del vencimiento de cada tarea. Una prórroga vigente no se muestra en verde ni pasa a rojo solo por quedar a cinco días.</p>

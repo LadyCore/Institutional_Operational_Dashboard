@@ -1,4 +1,33 @@
 (function () {
+    var claveTema = "digeduc-tema";
+
+    function aplicarTema(tema) {
+        if (tema === "oscuro") {
+            document.documentElement.setAttribute("data-tema", "oscuro");
+        } else {
+            document.documentElement.removeAttribute("data-tema");
+            tema = "claro";
+        }
+        document.querySelectorAll("[data-tema-opcion]").forEach(function (boton) {
+            boton.setAttribute("aria-pressed", boton.getAttribute("data-tema-opcion") === tema ? "true" : "false");
+        });
+        try {
+            localStorage.setItem(claveTema, tema);
+        } catch (error) {}
+    }
+
+    var temaGuardado = "claro";
+    try {
+        temaGuardado = localStorage.getItem(claveTema) === "oscuro" ? "oscuro" : "claro";
+    } catch (error) {}
+    aplicarTema(temaGuardado);
+
+    document.querySelectorAll("[data-tema-opcion]").forEach(function (boton) {
+        boton.addEventListener("click", function () {
+            aplicarTema(boton.getAttribute("data-tema-opcion"));
+        });
+    });
+
     var toggle = document.querySelector("[data-nav-toggle]");
     var cerrar = document.querySelector("[data-nav-close]");
 

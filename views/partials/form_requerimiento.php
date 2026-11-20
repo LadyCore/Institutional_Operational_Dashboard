@@ -22,7 +22,7 @@ $prefijo = $actividadFija['id'] ?? 'nueva';
 <form class="form-requerimiento" method="post" action="index.php">
     <?= campo_csrf() ?>
     <input type="hidden" name="accion" value="requerimiento_crear">
-    <?= campos_volver($actividadFija ? 'actividad' : 'requerimientos', $actividadFija['id'] ?? null) ?>
+    <?= campos_volver($actividadFija ? 'actividad' : 'requerimientos', $actividadFija['id'] ?? null, $situacionVuelta ?? null) ?>
     <?php if ($actividadFija): ?>
         <input type="hidden" name="actividad_id" value="<?= e($actividadFija['id']) ?>">
     <?php else: ?>
@@ -60,7 +60,8 @@ $prefijo = $actividadFija['id'] ?? 'nueva';
             <label for="solicitante-<?= e($prefijo) ?>">Instituto solicitante</label>
             <select id="solicitante-<?= e($prefijo) ?>" name="instituto_solicitante" required>
                 <?php foreach ($institutos as $institutoOpcion): ?>
-                    <option value="<?= e($institutoOpcion['id']) ?>"<?= $institutoOpcion['id'] === 'IFAL' ? ' selected' : '' ?>><?= e($institutoOpcion['sigla']) ?></option>
+                    <?php if (($institutoOpcion['tipo'] ?? '') === 'instituto' && (!instituto_activo($institutoOpcion) || registro_baja($institutoOpcion))) { continue; } ?>
+                    <option value="<?= e($institutoOpcion['id']) ?>"<?= $institutoOpcion['id'] === 'FACFA' ? ' selected' : '' ?>><?= e($institutoOpcion['sigla']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -69,6 +70,7 @@ $prefijo = $actividadFija['id'] ?? 'nueva';
         <label for="destino-<?= e($prefijo) ?>">Destino que debe atenderlo</label>
         <select id="destino-<?= e($prefijo) ?>" name="instituto_destino" required>
             <?php foreach ($institutos as $institutoOpcion): ?>
+                <?php if (($institutoOpcion['tipo'] ?? '') === 'instituto' && (!instituto_activo($institutoOpcion) || registro_baja($institutoOpcion))) { continue; } ?>
                 <option value="<?= e($institutoOpcion['id']) ?>"<?= $institutoOpcion['id'] === 'DIGEDUC' ? ' selected' : '' ?>><?= e($institutoOpcion['sigla']) ?> · <?= e($institutoOpcion['nombre']) ?></option>
             <?php endforeach; ?>
         </select>

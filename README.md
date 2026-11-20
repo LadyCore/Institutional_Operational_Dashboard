@@ -1,6 +1,6 @@
 # Institutional Operational Dashboard
 
-Prototipo funcional de seguimiento operativo para una Dirección General de Educación ficticia (DIGEDUC) y cinco institutos dependientes. Sirve para evaluar la interfaz, los permisos y el modelo de datos antes de construir la aplicación definitiva.
+Prototipo funcional de seguimiento operativo para un organismo central ficticio (CENTRAL) y cinco institutos dependientes. Sirve para evaluar la interfaz, los permisos y el modelo de datos antes de construir la aplicación definitiva.
 
 **Estado del proyecto:** prototipo funcional demostrativo. No es apto todavía para producción.
 

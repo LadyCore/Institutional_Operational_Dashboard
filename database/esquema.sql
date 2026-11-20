@@ -1,5 +1,5 @@
--- Esquema de destino para MySQL 8 o MariaDB 10.11.
--- Este prototipo no lo ejecuta. RepositorioFicticio devuelve los mismos campos.
+-- Esquema de destino para MySQL 8. Este prototipo no lo ejecuta.
+-- RepositorioFicticio devuelve los mismos campos.
 -- Motor InnoDB y utf8mb4. No usa PostgreSQL.
 
 CREATE TABLE institutos (

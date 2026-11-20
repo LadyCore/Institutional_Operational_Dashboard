@@ -3,7 +3,20 @@
 declare(strict_types=1);
 
 $filtrados = filtrar_requerimientos($requerimientos, $filtro_requerimientos);
+$consultaPendientes = $filtro_requerimientos['estado'] === 'sin_resolver';
+$cantidadPendientes = count($filtrados);
 ?>
+<?php if ($consultaPendientes): ?>
+<section class="tarjeta">
+    <header class="encabezado-consulta">
+        <div>
+            <h2>Requerimientos pendientes — <?= e($cantidadPendientes) ?> <?= $cantidadPendientes === 1 ? 'requerimiento' : 'requerimientos' ?></h2>
+            <p>Se muestran los que todavía no están resueltos, la misma cifra del panel.</p>
+        </div>
+        <a class="enlace-accion" href="<?= e(url_de('requerimientos')) ?>">Quitar filtro</a>
+    </header>
+</section>
+<?php endif; ?>
 <section class="tarjeta">
     <p class="aviso-demo">Sección demostrativa de coordinación. En este prototipo el alta y el cambio de estado funcionan dentro de la sesión. No hay base de datos ni aviso por correo. En la aplicación definitiva el registro será automático, persistente y no editable por usuarios comunes en su historial.</p>
     <form class="filtros" method="get" action="index.php">
@@ -25,6 +38,7 @@ $filtrados = filtrar_requerimientos($requerimientos, $filtro_requerimientos);
             <label for="estado">Estado de resolución</label>
             <select id="estado" name="estado">
                 <option value="">Todos</option>
+                <option value="sin_resolver"<?= $filtro_requerimientos['estado'] === 'sin_resolver' ? ' selected' : '' ?>>Sin resolver</option>
                 <?php foreach (estados_requerimiento() as $estado): ?>
                     <option value="<?= e($estado) ?>"<?= $filtro_requerimientos['estado'] === $estado ? ' selected' : '' ?>><?= e($estado) ?></option>
                 <?php endforeach; ?>
@@ -35,6 +49,7 @@ $filtrados = filtrar_requerimientos($requerimientos, $filtro_requerimientos);
             <select id="instituto" name="instituto">
                 <option value="">Todos</option>
                 <?php foreach ($institutos as $instituto): ?>
+                    <?php if (($instituto['tipo'] ?? '') === 'instituto' && (!instituto_activo($instituto) || registro_baja($instituto))) { continue; } ?>
                     <option value="<?= e($instituto['id']) ?>"<?= $filtro_requerimientos['instituto'] === $instituto['id'] ? ' selected' : '' ?>><?= e($instituto['sigla']) ?></option>
                 <?php endforeach; ?>
             </select>

@@ -14,6 +14,11 @@ final class Politica
         return $usuario['perfil'] === 'admin' || $usuario['perfil'] === 'consulta';
     }
 
+    public static function administraOperaciones(array $usuario): bool
+    {
+        return $usuario['perfil'] === 'admin';
+    }
+
     public static function veActividad(array $usuario, array $actividad): bool
     {
         if (self::veTodo($usuario)) {
@@ -52,13 +57,13 @@ final class Politica
             || $requerimiento['responsable_id'] === $usuario['id'];
     }
 
+    public static function veHistorial(array $usuario): bool
+    {
+        return self::administraOperaciones($usuario);
+    }
+
     public static function veAuditoria(array $usuario, array $fila): bool
     {
-        if (self::veTodo($usuario)) {
-            return true;
-        }
-
-        return $fila['ambito_id'] === $usuario['instituto_id']
-            || $fila['instituto_id'] === $usuario['instituto_id'];
+        return self::veHistorial($usuario);
     }
 }

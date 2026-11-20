@@ -8,8 +8,15 @@ $editarTareas = $usuario['perfil'] !== 'consulta';
 $volverRuta = 'actividad';
 $volverId = $actividad['id'];
 $actividadFija = $actividad;
+$situacionVuelta = en_lista((string) ($_GET['situacion'] ?? ''), ['rojo', 'amarillo', 'verde', 'finalizada']);
+$volverLista = $situacionVuelta !== ''
+    ? url_de('actividades', ['situacion' => $situacionVuelta])
+    : url_de('actividades');
 ?>
-<p class="volver"><a href="<?= e(url_de('actividades')) ?>">Volver al listado</a></p>
+<p class="volver"><a href="<?= e($volverLista) ?>">Volver al listado</a></p>
+<?php if (registro_baja($actividad)): ?>
+    <p class="flash flash-info" role="status">Esta actividad está dada de baja. No aparece en el tablero ni admite cambios. Sus tareas quedan como antecedente de la sesión.</p>
+<?php endif; ?>
 <section class="tarjeta ficha">
     <p class="id-ficha"><?= e($actividad['id']) ?></p>
     <div class="ficha-grid">
@@ -18,7 +25,11 @@ $actividadFija = $actividad;
             <strong><?= e($actividad['tipo']) ?></strong>
         </div>
         <div class="dato">
-            <span>Fecha de realización</span>
+            <span>Inicio</span>
+            <strong><?= e(fecha_es($actividad['fecha_inicio'])) ?></strong>
+        </div>
+        <div class="dato">
+            <span>Finalización prevista</span>
             <strong><?= e(fecha_es($actividad['fecha'])) ?></strong>
             <span class="sem sem-<?= e($actividad['semaforo']['clave']) ?>"><?= e($actividad['semaforo']['etiqueta']) ?></span>
             <small><?= e(texto_plazo($actividad['fecha'], $actividad['estado'])) ?></small>
@@ -37,10 +48,10 @@ $actividadFija = $actividad;
             <span class="avance avance-largo"><span style="width: <?= e($actividad['avance']) ?>%"></span></span>
         </div>
         <div class="dato">
-            <span>Institutos participantes</span>
+            <span>Dependencias participantes</span>
             <strong>
-                <?php foreach ($actividad['institutos'] as $sigla): ?>
-                    <span class="sigla"><?= e(sigla_instituto($institutos, $sigla)) ?></span>
+                <?php foreach (dependencias_visibles($actividad['institutos'], $institutos) as $dependencia): ?>
+                    <span class="sigla"><?= e($dependencia['sigla']) ?></span>
                 <?php endforeach; ?>
             </strong>
         </div>
@@ -49,7 +60,25 @@ $actividadFija = $actividad;
     <p><?= e($actividad['descripcion']) ?></p>
     <h2>Observaciones</h2>
     <p><?= $actividad['observaciones'] !== '' ? e($actividad['observaciones']) : 'Sin observaciones.' ?></p>
-    <p class="nota-semaforo">El estado general y el avance se calculan a partir de las tareas. El semáforo de la actividad usa solo su fecha de realización. Cada tarea tiene su propia fecha límite.</p>
+    <p class="nota-semaforo">La finalización prevista de la actividad es independiente del vencimiento de cada tarea. El indicador de esta ficha corresponde a esa fecha general. Las prórrogas no la modifican.</p>
+    <?php if (Politica::administraOperaciones($usuario) && !registro_baja($actividad)): ?>
+        <h2>Modificar actividad</h2>
+        <?php
+        $actividadForm = $actividad;
+        require ROOT . '/views/partials/form_actividad.php';
+        ?>
+        <form class="form-requerimiento" method="post" action="index.php">
+            <?= campo_csrf() ?>
+            <input type="hidden" name="accion" value="actividad_baja">
+            <input type="hidden" name="actividad_id" value="<?= e($actividad['id']) ?>">
+            <?= campos_volver('actividades', null, $situacionVuelta) ?>
+            <div class="campo-ancho">
+                <label for="baja-actividad">Motivo de la baja</label>
+                <input id="baja-actividad" name="motivo" required minlength="8" maxlength="500">
+            </div>
+            <button type="submit">Dar de baja la actividad</button>
+        </form>
+    <?php endif; ?>
 </section>
 
 <section class="tarjeta">
@@ -60,13 +89,21 @@ $actividadFija = $actividad;
     <?php if ($usuario['perfil'] === 'responsable'): ?>
         <p class="nota-semaforo">Puede guardar cambios en las tareas de <?= e(sigla_instituto($institutos, $usuario['instituto_id'])) ?>. Las tareas de otros institutos quedan en consulta. El cambio permanece en esta sesión.</p>
     <?php elseif ($usuario['perfil'] === 'admin'): ?>
-        <p class="nota-semaforo">Puede actualizar cualquier tarea. El cambio permanece en esta sesión y no se escribe en una base de datos.</p>
+        <p class="nota-semaforo">Puede actualizar, reasignar y reprogramar cualquier tarea. El cambio permanece en esta sesión y no se escribe en una base de datos.</p>
     <?php endif; ?>
     <?php require ROOT . '/views/partials/leyenda.php'; ?>
+    <?php if (Politica::administraOperaciones($usuario) && !registro_baja($actividad)): ?>
+        <h3>Asignar una tarea</h3>
+        <?php require ROOT . '/views/partials/form_tarea_nueva.php'; ?>
+    <?php endif; ?>
     <?php if ($tareasDeActividad === []): ?>
         <p>Esta actividad no tiene tareas cargadas.</p>
     <?php else: ?>
-        <?php require ROOT . '/views/partials/tabla_tareas.php'; ?>
+        <?php
+        $participantes = $actividad['institutos'];
+        $mostrarHistorial = true;
+        require ROOT . '/views/partials/tabla_tareas.php';
+        ?>
     <?php endif; ?>
 </section>
 

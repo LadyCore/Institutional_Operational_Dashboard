@@ -14,7 +14,7 @@ $lista = $listaActividades;
                 <th scope="col">Fecha</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Avance</th>
-                <th scope="col">Institutos</th>
+                <th scope="col">Dependencias</th>
                 <th scope="col">Req.</th>
             </tr>
         </thead>
@@ -26,15 +26,28 @@ $lista = $listaActividades;
             <?php endif; ?>
             <?php foreach ($lista as $item): ?>
                 <?php $tareasItem = $tareas_por_actividad[$item['id']] ?? []; ?>
+                <?php
+                $conProrroga = false;
+                foreach ($tareasItem as $tareaMarca) {
+                    if (($tareaMarca['reprogramaciones'] ?? []) !== []) {
+                        $conProrroga = true;
+                        break;
+                    }
+                }
+                ?>
                 <tr class="<?= $item['vencida'] ? 'fila-vencida' : '' ?><?= $item['estado'] === 'Finalizada' ? ' fila-finalizada' : '' ?>">
                     <td class="id"><?= e($item['id']) ?></td>
                     <td>
                         <a class="titulo-actividad" href="<?= e(url_de('actividad', ['id' => $item['id']])) ?>"><?= e($item['titulo']) ?></a>
                         <span class="sub"><?= e($item['tipo']) ?> · <?= e(nombre_usuario($usuarios, $item['responsable_id'])) ?></span>
+                        <?php if ($conProrroga): ?>
+                            <span class="sub">Incluye una tarea con prórroga</span>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <?= e(fecha_es($item['fecha'])) ?>
                         <span class="sem sem-<?= e($item['semaforo']['clave']) ?>"><?= e($item['semaforo']['etiqueta']) ?></span>
+                        <span class="sub">Inicio <?= e(fecha_es($item['fecha_inicio'])) ?></span>
                         <span class="sub"><?= e(texto_plazo($item['fecha'], $item['estado'])) ?></span>
                     </td>
                     <td><span class="estado estado-<?= e(clase_estado($item['estado'])) ?>"><?= e($item['estado']) ?></span></td>
@@ -43,8 +56,8 @@ $lista = $listaActividades;
                         <?= e($item['avance']) ?> %
                     </td>
                     <td>
-                        <?php foreach ($item['institutos'] as $sigla): ?>
-                            <span class="sigla"><?= e(sigla_instituto($institutos, $sigla)) ?></span>
+                        <?php foreach (dependencias_visibles($item['institutos'], $institutos) as $dependencia): ?>
+                            <span class="sigla"><?= e($dependencia['sigla']) ?></span>
                         <?php endforeach; ?>
                     </td>
                     <td><?= e($item['reqs_pendientes']) ?></td>
@@ -60,6 +73,7 @@ $lista = $listaActividades;
                             <?php
                             $tareasDeActividad = $tareasItem;
                             $editarTareas = false;
+                            $mostrarHistorial = false;
                             require ROOT . '/views/partials/tabla_tareas.php';
                             ?>
                             <p class="seguir"><a href="<?= e(url_de('actividad', ['id' => $item['id']])) ?>">Abrir la ficha</a></p>
